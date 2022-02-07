@@ -52,3 +52,7 @@ button {
 .numbers, .decimalbtn {
     background-color: teal;
 }
+
+.active {
+    background-color: lightsalmon;
+}

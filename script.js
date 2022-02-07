@@ -1,5 +1,7 @@
 let displayNum = [0];
-let previousSolution = 0;
+let previousSol = null;
+let previousOperator = null;
+let operatorPressed = false;
 
 const display = document.querySelector('.display');
 const zerobtn = document.querySelector('.zerobtn');
@@ -39,49 +41,135 @@ function divide(a, b) {
     return a / b;
 }
 
-function operate(a, operator, b) {
-    let answer = 0;
-    switch(operator) {
-        case '+':
-            answer = add(a, b);
-            break;
-        case '-':
-            answer = subtract(a, b);
-            break;
-        case '*':
-            answer = multiply(a, b);
-            break;
-        case '/':
-            answer = divide(a, b);
-            break;
-        default:
-            answer = 'Error';
+function toggleActive(operator) {
+    switch (operator) {
+    case '+':
+        addbtn.classList.toggle('active');
+        break;
+    case '-':
+        subtractbtn.classList.toggle('active');
+        break;
+    case '*':
+        multiplybtn.classList.toggle('active');
+        break;
+    case '/':
+        dividebtn.classList.toggle('active');
+        break;
     }
-    return answer;
 }
 
-function addNumToDisplay(number) { //or decimal!
-    if (displayNum[0] === 0 && displayNum[1] != '.') {
-        if (number === '.') {
-            displayNum = [ 0 , '.' ]
+function removeActive() {
+	addbtn.classList.remove('active');
+	subtractbtn.classList.remove('active');
+	multiplybtn.classList.remove('active');
+	dividebtn.classList.remove('active');
+}
+
+function changeDisplay(num) {
+	displayNum = num
+	display.textContent = displayNum //does an if statement for .join('') need to be added?
+}
+
+function operate(a, operator, b) {
+	let solution = 0;
+	if (typeof b === 'object') {
+		b = b.join('');
+	}
+	b = parseInt(b * 1000000000, 10) / 1000000000;
+	switch (operator) {
+		case '+':
+		solution = add(a,b);
+		break;
+		case '-':
+		solution = subtract(a,b);
+		break;
+		case '*':
+		solution = multiply(a,b)
+		break;
+		case '/':
+        if(b === 0) {
+            solution = 'chill';
         } else {
-            displayNum[0] = number;
+		    solution = divide(a,b);
         }
-        display.textContent = displayNum.join('');
-    } else if (number === '.') {
-        let isThereDecimal = displayNum.filter(digit => digit === '.')
-        if (!isThereDecimal[0]) {
-            displayNum.push(number);
-            display.textContent = displayNum.join('');
+		break;
+	}
+    let isThereDecimal = Array.from(solution).filter(digit => digit === '.');
+    let solutionLength = solution.toString().length;
+    if (solution > 999999999) {
+        solution = 'Number too large'
+    } else if (!isThereDecimal[0]) {
+        if (solutionLength > 10) {
+            console.log(solution);
+            solution = Math.round(solution * 10000) / 10000;
         }
-    } else if ((number != 0 || displayNum[0] != 0) && displayNum.length < 10) { //subject to change
-        displayNum.push(number);
-        display.textContent = displayNum.join('');
     }
+	previousSol = solution;
+    console.log(previousSol);
+    console.log(typeof previousSol);
+	changeDisplay(solution);
+    return solution;
+}
+
+function addNumToDisplay(num) { //unsure about this one chief
+    if (operatorPressed) {
+        operatorPressed = false;
+        removeActive();
+        if (typeof displayNum === 'object') {
+            displayNum = displayNum.join('');
+        }
+        previousSol = parseInt(displayNum * 1000000000, 10) / 1000000000;
+        displayNum = [0];
+    }
+    if (typeof displayNum === 'number') {
+        if(num === '.') {
+            displayNum = [0, '.']
+            display.textContent = displayNum.join('');
+        } else {
+            changeDisplay(num);
+        }
+    } else if (typeof displayNum === 'object') {
+        if (num === '.') {
+                let isThereDecimal = displayNum.filter(digit => digit === '.')
+                if (!isThereDecimal[0]) {
+                        displayNum.push(num);
+                        display.textContent = displayNum.join('');
+            }
+        } else if (displayNum[0] === 0 && displayNum [1] !== '.') {
+            changeDisplay([num]);
+        } else if ((num != 0 || displayNum[0] != 0) && displayNum.length < 10) { //subject to change
+                displayNum.push(num);
+                display.textContent = displayNum.join('');
+        }
+    }
+}
+
+function selectOperator(operator) { //was this the name?
+	if (operatorPressed) {
+		removeActive();
+		//change previousOperator?
+	}
+	operatorPressed = true;
+	toggleActive(operator);
+	if (previousSol !== null && previousOperator !== null) { // can the !== just be changed to previousSol, previousOperator
+		operate(previousSol, previousOperator, displayNum)
+	}
+	if (operator === '=') {
+	previousOperator = null;
+	} else {
+	previousOperator = operator;
+	}
 }
 
 function clearDisplay() {
     displayNum = [0];
+    previousSol = null;
+    previousOperator = null;
+    operatorPressed = false;
+    addbtn.classList.remove('active');
+    subtractbtn.classList.remove('active');
+    multiplybtn.classList.remove('active');
+    dividebtn.classList.remove('active');
     display.textContent = displayNum;
 }
 
@@ -107,3 +195,8 @@ ninebtn.addEventListener('click', () => addNumToDisplay(9));
 decimalbtn.addEventListener('click', () => addNumToDisplay('.'))
 clearbtn.addEventListener('click', clearDisplay);
 signbtn.addEventListener('click', flipSign);
+addbtn.addEventListener('click', () => selectOperator('+'));
+subtractbtn.addEventListener('click', () => selectOperator('-'));
+multiplybtn.addEventListener('click', () => selectOperator('*'));
+dividebtn.addEventListener('click', () => selectOperator('/'));
+equalsbtn.addEventListener('click', () => selectOperator('='));
